@@ -24,5 +24,14 @@ def _ensure_india_hrms_fields():
 		from hrms.regional.india.setup import make_custom_fields as make_india_fields
 
 		make_india_fields()
+	except ImportError:
+		frappe.log_error(
+			title="HRMS PF India: HRMS India regional module unavailable",
+			message=frappe.get_traceback(),
+		)
 	except Exception:
-		frappe.log_error(title="HRMS PF India: India regional setup skipped")
+		frappe.log_error(
+			title="HRMS PF India: India regional setup failed",
+			message=frappe.get_traceback(),
+		)
+		raise

@@ -1,6 +1,8 @@
 frappe.ui.form.on("Employee", {
 	refresh(frm) {
-		if (!frm.doc.name) return;
+		if (!frm.doc.name || !frappe.boot.installed_apps.includes("hrms_pf_india")) {
+			return;
+		}
 		frm.trigger("update_pf_preview");
 	},
 

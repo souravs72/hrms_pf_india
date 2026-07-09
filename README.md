@@ -1,54 +1,71 @@
-# Copyright (c) 2026, Ascra Technologies and contributors
-# License: MIT
+# HRMS PF India
 
-## Customization vs code — decision summary
+India EPF/VPF per-employee payroll extension for [Frappe HRMS](https://github.com/frappe/hrms), aligned with **EPF Scheme 2026**.
 
-| Need | Site customization only? | This app adds |
-|---|---|---|
-| Mandatory PF formula (12% on ₹15,000 ceiling) | Yes — Salary Structure | Documents standard formula |
-| Per-employee VPF amount | Yes — manual Additional Salary per employee | **Auto-sync** from Employee master |
-| VPF opt-in / consent tracking | Partial — custom fields via UI | **Custom fields + validation** |
-| PF preview on Employee form | No | **Client script + API** |
-| Additional Provident Fund component | Manual create + component type | **Auto-created on install** |
-| Provident Fund Deductions report | Built into HRMS India setup | No change needed |
-| Employer VPF matching on salary slip | No — employer cost, not employee deduction | Consent flag only (future: employer accrual) |
-| EPFO ECR / challan file | No | Out of scope |
+## What it does
 
-**Verdict:** Basic compliance works with HRMS site setup alone. This app removes manual HR work and enforces EPF Scheme 2026 consent/validation — that is what justifies a small extension app rather than only customizations.
+- Adds **Employee PF settings** (statutory minimum vs voluntary PF)
+- Auto-syncs **Additional Salary** for voluntary PF (VPF)
+- Creates **Provident Fund** and **Additional Provident Fund** salary components
+- Validates consent date and wage limits
+- Shows live PF preview on the Employee form
 
----
+## Requirements
+
+- Frappe v15 + ERPNext + HRMS
+- Company country: **India** (for full HRMS India payroll fields)
 
 ## Installation
 
-App is installed on site `hrms-pf.localhost` together with ERPNext and HRMS.
-
 ```bash
-cd /path/to/bench
-bench --site hrms-pf.localhost install-app hrms_pf_india
-bench --site hrms-pf.localhost migrate
+bench get-app https://github.com/souravs72/hrms_pf_india
+bench --site your-site install-app hrms_pf_india
+bench --site your-site migrate
 ```
 
-## Salary Structure setup (one-time per company)
+## Salary Structure setup (required)
 
-Add to **Deductions**:
+Add to **Deductions** on your shared salary structure:
 
 | Component | Formula |
 |---|---|
 | Provident Fund | `min(BS, 15000) * 0.12` |
 
-Do **not** put voluntary PF in the structure — the app syncs it via Additional Salary.
+Do **not** add voluntary PF to the structure — this app syncs it via Additional Salary.
 
 ## Employee PF types
 
-| Type | Salary slip result |
+| Type | Salary slip |
 |---|---|
-| **Statutory Minimum** | Provident Fund = ₹1,800 (when basic > ₹15,000) |
-| **Voluntary Fixed Amount** | Provident Fund + Additional Provident Fund (fixed) |
-| **Voluntary on Full Basic** | Provident Fund + Additional PF = 12% of basic − mandatory |
+| Statutory Minimum | Provident Fund only (e.g. ₹1,800 when basic > ₹15,000) |
+| Voluntary Fixed Amount | Provident Fund + Additional Provident Fund (fixed amount) |
+| Voluntary on Full Basic | Provident Fund + Additional PF = 12% of basic − mandatory |
 
-## EPF Scheme 2026 notes
+## Production checklist
 
-- Mandatory employee PF capped at **12% × ₹15,000 = ₹1,800/month**
-- Amounts above ceiling are **voluntary** (VPF)
-- Employer is **not required** to match VPF
-- Consent date is required for voluntary options
+- [ ] Company country = India
+- [ ] Salary Structure has mandatory PF formula with ₹15,000 ceiling
+- [ ] Salary Structure Assignment exists for each employee **before** enabling VPF
+- [ ] Employee **Provident Fund Account (UAN)** filled
+- [ ] VPF employees have **Consent Date** recorded
+- [ ] Run **Provident Fund Deductions** report monthly for remittance tracking
+
+## Tests
+
+```bash
+bench --site your-site set-config allow_tests true
+bench --site your-site run-tests --app hrms_pf_india
+```
+
+## Customization vs this app
+
+| Need | HRMS setup only | This app |
+|---|---|---|
+| Mandatory PF formula | Yes | Documents standard |
+| Per-employee VPF | Manual Additional Salary | Auto-sync from Employee |
+| Consent tracking | Manual | Built-in validation |
+| PF preview | No | Yes |
+
+## License
+
+MIT

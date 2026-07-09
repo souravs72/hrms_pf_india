@@ -17,6 +17,7 @@ doctype_js = {
 doc_events = {
 	"Employee": {
 		"validate": "hrms_pf_india.hrms_pf_india.utils.vpf_sync.validate_employee_pf_settings",
+		"after_insert": "hrms_pf_india.hrms_pf_india.utils.vpf_sync.sync_vpf_additional_salary",
 		"on_update": "hrms_pf_india.hrms_pf_india.utils.vpf_sync.sync_vpf_additional_salary",
 	},
 }

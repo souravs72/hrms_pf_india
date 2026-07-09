@@ -4,24 +4,34 @@
 import frappe
 from frappe.utils import flt
 
-STATUTORY_WAGE_CEILING = 15000
-EPF_EMPLOYEE_RATE = 0.12
+from hrms_pf_india.hrms_pf_india.constants import (
+	EPF_EMPLOYEE_RATE,
+	PF_CONTRIBUTION_STATUTORY,
+	PF_CONTRIBUTION_VOLUNTARY_FIXED,
+	PF_CONTRIBUTION_VOLUNTARY_FULL_BASIC,
+	STATUTORY_WAGE_CEILING,
+)
+
 MANDATORY_PF_CAP = flt(STATUTORY_WAGE_CEILING * EPF_EMPLOYEE_RATE)
 
 
-def get_pf_wages(employee_doc):
-	"""Best-effort PF wage base from active salary structure assignment."""
-	assignment = frappe.db.get_value(
-		"Salary Structure Assignment",
-		{"employee": employee_doc.name, "docstatus": 1},
-		"base",
-		order_by="from_date desc",
+def get_pf_wages(employee):
+	"""PF wage base from the latest submitted salary structure assignment."""
+	if not employee:
+		return 0
+
+	return flt(
+		frappe.db.get_value(
+			"Salary Structure Assignment",
+			{"employee": employee, "docstatus": 1},
+			"base",
+			order_by="from_date desc",
+		)
 	)
-	return flt(assignment)
 
 
 def calculate_pf_breakup(employee_doc, pf_wages=None):
-	pf_wages = flt(pf_wages if pf_wages is not None else get_pf_wages(employee_doc))
+	pf_wages = flt(pf_wages if pf_wages is not None else get_pf_wages(employee_doc.name))
 	mandatory = calculate_mandatory_pf(pf_wages)
 	voluntary = calculate_voluntary_pf(employee_doc, pf_wages, mandatory)
 	return {
@@ -37,14 +47,14 @@ def calculate_mandatory_pf(pf_wages):
 
 
 def calculate_voluntary_pf(employee_doc, pf_wages, mandatory_pf=None):
-	contribution_type = employee_doc.get("pf_contribution_type") or "Statutory Minimum"
-	if contribution_type == "Statutory Minimum":
+	contribution_type = employee_doc.get("pf_contribution_type") or PF_CONTRIBUTION_STATUTORY
+	if contribution_type == PF_CONTRIBUTION_STATUTORY:
 		return 0
 
-	if contribution_type == "Voluntary Fixed Amount":
+	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FIXED:
 		return flt(employee_doc.get("voluntary_pf_amount"))
 
-	if contribution_type == "Voluntary on Full Basic":
+	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FULL_BASIC:
 		if pf_wages <= STATUTORY_WAGE_CEILING:
 			return 0
 		mandatory_pf = mandatory_pf if mandatory_pf is not None else calculate_mandatory_pf(pf_wages)
