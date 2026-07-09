@@ -16,7 +16,7 @@ def get_custom_fields():
 				"fieldname": "pf_contribution_section",
 				"label": "PF Contribution (India)",
 				"fieldtype": "Section Break",
-				"insert_after": "provident_fund_account",
+				"insert_after": _employee_pf_anchor_field(),
 				"collapsible": 1,
 				"module": "HRMS PF India",
 			},
@@ -91,3 +91,12 @@ def get_custom_fields():
 			},
 		],
 	}
+
+
+def _employee_pf_anchor_field():
+	for fieldname in ("provident_fund_account", "pan_number", "payroll_cost_center", "company"):
+		if frappe.db.exists("Custom Field", {"dt": "Employee", "fieldname": fieldname}):
+			return fieldname
+		if fieldname in frappe.get_meta("Employee").get_valid_columns():
+			return fieldname
+	return "company"

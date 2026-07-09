@@ -39,3 +39,12 @@ class TestPFCalculator(FrappeTestCase):
 		breakup = calculate_pf_breakup(doc, pf_wages=60000)
 		self.assertEqual(breakup["voluntary_pf"], 0)
 		self.assertEqual(breakup["total_employee_pf"], 1800)
+
+	def test_voluntary_full_basic_below_ceiling(self):
+		doc = frappe._dict(pf_contribution_type="Voluntary on Full Basic")
+		breakup = calculate_pf_breakup(doc, pf_wages=12000)
+		self.assertEqual(breakup["mandatory_pf"], 1440)
+		self.assertEqual(breakup["voluntary_pf"], 0)
+
+	def test_zero_wages_returns_zero_mandatory(self):
+		self.assertEqual(calculate_mandatory_pf(0), 0)

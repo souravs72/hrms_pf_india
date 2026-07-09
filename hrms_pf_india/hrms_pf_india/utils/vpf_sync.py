@@ -22,7 +22,8 @@ from hrms_pf_india.hrms_pf_india.utils.pf_calculator import (
 
 
 def validate_employee_pf_settings(doc, method=None):
-	breakup = calculate_pf_breakup(doc, pf_wages=get_pf_wages(doc.name))
+	pf_wages = get_pf_wages(doc.name) if doc.name else 0
+	breakup = calculate_pf_breakup(doc, pf_wages=pf_wages)
 	doc.estimated_mandatory_pf = breakup["mandatory_pf"]
 	doc.estimated_voluntary_pf = breakup["voluntary_pf"]
 	doc.estimated_total_employee_pf = breakup["total_employee_pf"]
@@ -33,6 +34,13 @@ def validate_employee_pf_settings(doc, method=None):
 
 	if not doc.get("pf_consent_date"):
 		frappe.throw(_("PF Voluntary Consent Date is required for voluntary PF contributions."))
+
+	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FIXED and flt(doc.get("voluntary_pf_amount")) <= 0:
+		frappe.throw(_("Voluntary PF Amount must be greater than zero."))
+
+	# Assignment and wage checks require a persisted employee record.
+	if not doc.name:
+		return
 
 	if not frappe.db.exists("Salary Component", ADDITIONAL_PF_COMPONENT):
 		frappe.throw(
@@ -63,17 +71,31 @@ def validate_employee_pf_settings(doc, method=None):
 			)
 		)
 
-	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FIXED and flt(doc.get("voluntary_pf_amount")) <= 0:
-		frappe.throw(_("Voluntary PF Amount must be greater than zero."))
-
 
 def sync_vpf_additional_salary(doc, method=None):
-	if frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_import:
+	if frappe.flags.in_install or frappe.flags.in_migrate or frappe.flags.in_import or frappe.flags.in_patch:
 		return
 
-	if doc.status != "Active":
+	if not doc.name or doc.status != "Active":
 		return
 
+	try:
+		_sync_vpf_additional_salary(doc)
+	except frappe.ValidationError:
+		raise
+	except Exception:
+		frappe.log_error(
+			title="HRMS PF India: VPF sync failed",
+			message=frappe.get_traceback(),
+		)
+		frappe.throw(
+			_("Failed to sync Voluntary PF Additional Salary for {0}. Check Error Log for details.").format(
+				doc.name
+			)
+		)
+
+
+def _sync_vpf_additional_salary(doc):
 	voluntary_amount = calculate_voluntary_pf(doc, get_pf_wages(doc.name))
 	active = _get_active_vpf_additional_salary(doc.name)
 
@@ -126,21 +148,15 @@ def _replace_vpf_additional_salary(employee_doc, amount, existing_name):
 		_create_vpf_additional_salary(employee_doc, amount)
 		return
 
+	savepoint = "hrms_pf_india_vpf_replace"
+	frappe.db.savepoint(savepoint)
 	try:
 		additional.flags.ignore_permissions = True
 		additional.cancel()
 		_create_vpf_additional_salary(employee_doc, amount)
 	except Exception:
-		frappe.log_error(
-			title="HRMS PF India: VPF Additional Salary update failed",
-			message=frappe.get_traceback(),
-		)
-		frappe.throw(
-			_(
-				"Failed to update Voluntary PF Additional Salary for {0}. "
-				"The previous record may have been cancelled — please verify Additional Salary manually."
-			).format(employee_doc.name)
-		)
+		frappe.db.rollback(save_point=savepoint)
+		raise
 
 
 def _create_vpf_additional_salary(employee_doc, amount):
@@ -173,15 +189,8 @@ def _create_vpf_additional_salary(employee_doc, amount):
 		}
 	)
 	doc.flags.ignore_permissions = True
-	try:
-		doc.insert()
-		doc.submit()
-	except Exception:
-		frappe.log_error(
-			title="HRMS PF India: VPF Additional Salary creation failed",
-			message=frappe.get_traceback(),
-		)
-		raise
+	doc.insert()
+	doc.submit()
 
 	frappe.msgprint(
 		_("Recurring Additional Salary created for Voluntary PF: {0}").format(
