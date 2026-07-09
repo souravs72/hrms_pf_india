@@ -2,6 +2,7 @@
 # License: MIT
 
 import frappe
+from frappe import _
 
 ADDITIONAL_PF_COMPONENT = "Additional Provident Fund"
 MANDATORY_PF_COMPONENT = "Provident Fund"
@@ -14,27 +15,17 @@ _COMPONENT_ABBR = {
 
 def ensure_pf_salary_components():
 	if not frappe.db.has_column("Salary Component", "component_type"):
-		frappe.throw(
-			frappe._(
-				"Salary Component field `component_type` is missing. "
-				"Ensure HRMS India regional setup completed before HRMS PF India migrate."
-			)
-		)
+		frappe.throw(_("Salary Component field `component_type` is missing."))
 
-	_ensure_component(
-		MANDATORY_PF_COMPONENT,
-		component_type="Provident Fund",
-		description="Mandatory employee EPF contribution (EPF Scheme 2026)",
-	)
+	_ensure_component(MANDATORY_PF_COMPONENT, component_type="Provident Fund")
 	_ensure_component(
 		ADDITIONAL_PF_COMPONENT,
 		component_type="Additional Provident Fund",
-		description="Voluntary employee PF contribution (VPF) above statutory minimum",
 		remove_if_zero_valued=1,
 	)
 
 
-def _ensure_component(name, component_type, description, remove_if_zero_valued=0):
+def _ensure_component(name, component_type, remove_if_zero_valued=0):
 	values = {
 		"component_type": component_type,
 		"type": "Deduction",
@@ -52,7 +43,6 @@ def _ensure_component(name, component_type, description, remove_if_zero_valued=0
 			"doctype": "Salary Component",
 			"salary_component": name,
 			"salary_component_abbr": _COMPONENT_ABBR.get(name, name[:10].upper()),
-			"description": description,
 			**values,
 		}
 	)

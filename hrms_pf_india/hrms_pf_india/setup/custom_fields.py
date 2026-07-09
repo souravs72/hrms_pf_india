@@ -27,7 +27,6 @@ def get_custom_fields():
 				"insert_after": "pf_contribution_section",
 				"options": "\nStatutory Minimum\nVoluntary Fixed Amount\nVoluntary on Full Basic",
 				"default": "Statutory Minimum",
-				"description": "Statutory Minimum = 12% on wage ceiling (₹15,000). Voluntary options add Additional PF via Additional Salary.",
 				"module": "HRMS PF India",
 			},
 			{
@@ -46,7 +45,6 @@ def get_custom_fields():
 				"insert_after": "voluntary_pf_amount",
 				"depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
 				"mandatory_depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
-				"description": "Required for voluntary PF under EPF Scheme 2026.",
 				"module": "HRMS PF India",
 			},
 			{
@@ -55,7 +53,6 @@ def get_custom_fields():
 				"fieldtype": "Check",
 				"insert_after": "pf_consent_date",
 				"depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
-				"description": "Employer matching is optional under EPF Scheme 2026. Track consent here; employer share is not deducted from employee salary.",
 				"module": "HRMS PF India",
 			},
 			{
@@ -70,7 +67,6 @@ def get_custom_fields():
 				"fieldtype": "Currency",
 				"insert_after": "pf_preview_column",
 				"read_only": 1,
-				"description": "12% of PF wages up to statutory ceiling (₹15,000).",
 				"module": "HRMS PF India",
 			},
 			{

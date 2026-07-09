@@ -33,43 +33,25 @@ def validate_employee_pf_settings(doc, method=None):
 		return
 
 	if not doc.get("pf_consent_date"):
-		frappe.throw(_("PF Voluntary Consent Date is required for voluntary PF contributions."))
+		frappe.throw(_("Consent Date is required for voluntary PF."))
 
 	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FIXED and flt(doc.get("voluntary_pf_amount")) <= 0:
 		frappe.throw(_("Voluntary PF Amount must be greater than zero."))
 
-	# Assignment and wage checks require a persisted employee record.
 	if not doc.name:
 		return
 
 	if not frappe.db.exists("Salary Component", ADDITIONAL_PF_COMPONENT):
-		frappe.throw(
-			_("Salary Component {0} is not set up. Run migrate or reinstall HRMS PF India.").format(
-				ADDITIONAL_PF_COMPONENT
-			)
-		)
+		frappe.throw(_("Salary Component {0} is not set up.").format(ADDITIONAL_PF_COMPONENT))
 
 	if not _has_salary_structure_assignment(doc.name, doc.get("pf_consent_date")):
-		frappe.throw(
-			_(
-				"A submitted Salary Structure Assignment is required before enabling voluntary PF for {0}."
-			).format(doc.name)
-		)
+		frappe.throw(_("Salary Structure Assignment is required before enabling voluntary PF."))
 
-	pf_wages = breakup["pf_wages"]
-	if not pf_wages:
-		frappe.throw(
-			_(
-				"Salary Structure Assignment base pay is required to configure voluntary PF. Assign a salary structure first."
-			)
-		)
+	if not breakup["pf_wages"]:
+		frappe.throw(_("Salary Structure Assignment base pay is required."))
 
-	if breakup["total_employee_pf"] > flt(pf_wages * MAX_VPF_PERCENT_OF_WAGES):
-		frappe.throw(
-			_("Total employee PF ({0}) cannot exceed 100% of PF wages ({1}).").format(
-				breakup["total_employee_pf"], pf_wages
-			)
-		)
+	if breakup["total_employee_pf"] > flt(breakup["pf_wages"] * MAX_VPF_PERCENT_OF_WAGES):
+		frappe.throw(_("Total employee PF cannot exceed 100% of PF wages."))
 
 
 def sync_vpf_additional_salary(doc, method=None):
@@ -84,15 +66,8 @@ def sync_vpf_additional_salary(doc, method=None):
 	except frappe.ValidationError:
 		raise
 	except Exception:
-		frappe.log_error(
-			title="HRMS PF India: VPF sync failed",
-			message=frappe.get_traceback(),
-		)
-		frappe.throw(
-			_("Failed to sync Voluntary PF Additional Salary for {0}. Check Error Log for details.").format(
-				doc.name
-			)
-		)
+		frappe.log_error(title="HRMS PF India: VPF sync failed", message=frappe.get_traceback())
+		frappe.throw(_("Failed to sync Voluntary PF for {0}.").format(doc.name))
 
 
 def _sync_vpf_additional_salary(doc):
@@ -142,7 +117,6 @@ def _get_active_vpf_additional_salary(employee):
 
 
 def _replace_vpf_additional_salary(employee_doc, amount, existing_name):
-	"""Submitted Additional Salary rows cannot update amount; cancel and recreate."""
 	additional = frappe.get_doc("Additional Salary", existing_name)
 	if additional.docstatus != 1:
 		_create_vpf_additional_salary(employee_doc, amount)
@@ -160,25 +134,22 @@ def _replace_vpf_additional_salary(employee_doc, amount, existing_name):
 
 
 def _create_vpf_additional_salary(employee_doc, amount):
-	company = employee_doc.company
-	if not company:
-		frappe.throw(_("Company is required on Employee before enabling voluntary PF."))
+	if not employee_doc.company:
+		frappe.throw(_("Company is required on Employee."))
 
 	if not _has_salary_structure_assignment(employee_doc.name, employee_doc.get("pf_consent_date")):
-		frappe.throw(
-			_("Cannot create VPF Additional Salary without a submitted Salary Structure Assignment.")
-		)
+		frappe.throw(_("Salary Structure Assignment is required."))
 
 	from_date = getdate(employee_doc.get("pf_consent_date") or today())
 	to_date = add_years(from_date, VPF_ADDITIONAL_SALARY_YEARS)
-	currency = frappe.db.get_value("Company", company, "default_currency")
+	currency = frappe.db.get_value("Company", employee_doc.company, "default_currency")
 
 	doc = frappe.get_doc(
 		{
 			"doctype": "Additional Salary",
 			"naming_series": "HR-ADS-.YY.-.MM.-",
 			"employee": employee_doc.name,
-			"company": company,
+			"company": employee_doc.company,
 			"salary_component": ADDITIONAL_PF_COMPONENT,
 			"amount": amount,
 			"currency": currency,
@@ -192,13 +163,6 @@ def _create_vpf_additional_salary(employee_doc, amount):
 	doc.insert()
 	doc.submit()
 
-	frappe.msgprint(
-		_("Recurring Additional Salary created for Voluntary PF: {0}").format(
-			frappe.format(amount, {"fieldtype": "Currency"})
-		),
-		indicator="green",
-	)
-
 
 def _disable_vpf_additional_salary(existing):
 	if not existing:
@@ -211,7 +175,6 @@ def _disable_vpf_additional_salary(existing):
 		1,
 		update_modified=True,
 	)
-	frappe.msgprint(_("Voluntary PF Additional Salary disabled for this employee."), indicator="blue")
 
 
 @frappe.whitelist()

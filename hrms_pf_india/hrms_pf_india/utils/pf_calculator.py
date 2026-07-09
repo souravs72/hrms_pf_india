@@ -16,7 +16,6 @@ MANDATORY_PF_CAP = flt(STATUTORY_WAGE_CEILING * EPF_EMPLOYEE_RATE)
 
 
 def get_pf_wages(employee):
-	"""PF wage base from the latest submitted salary structure assignment."""
 	if not employee:
 		return 0
 

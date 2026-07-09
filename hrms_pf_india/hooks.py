@@ -1,7 +1,7 @@
 app_name = "hrms_pf_india"
 app_title = "HRMS PF India"
 app_publisher = "Ascra Technologies"
-app_description = "India EPF/VPF per-employee payroll configuration for HRMS (EPF Scheme 2026)"
+app_description = "Per-employee EPF/VPF for HRMS"
 app_email = "admin@ascratech.com"
 app_license = "mit"
 

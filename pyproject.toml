@@ -3,7 +3,7 @@ name = "hrms_pf_india"
 authors = [
     { name = "Ascra Technologies", email = "admin@ascratech.com" }
 ]
-description = "India EPF/VPF per-employee payroll configuration for HRMS"
+description = "Per-employee EPF/VPF for HRMS"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]

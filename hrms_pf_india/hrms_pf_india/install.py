@@ -19,20 +19,13 @@ def after_migrate():
 
 
 def _ensure_india_hrms_fields():
-	"""Enable HRMS India Salary Component fields (component_type, PF account, etc.)."""
 	try:
 		from hrms.regional.india.setup import make_custom_fields as make_india_fields
 
 		make_india_fields()
 	except ImportError as exc:
-		frappe.log_error(
-			title="HRMS PF India: HRMS India regional module unavailable",
-			message=frappe.get_traceback(),
-		)
+		frappe.log_error(title="HRMS PF India: India setup unavailable", message=frappe.get_traceback())
 		raise exc
 	except Exception:
-		frappe.log_error(
-			title="HRMS PF India: India regional setup failed",
-			message=frappe.get_traceback(),
-		)
+		frappe.log_error(title="HRMS PF India: India setup failed", message=frappe.get_traceback())
 		raise
