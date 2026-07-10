@@ -1,9 +1,8 @@
-# HRMS PF India — Documentation Index
+# Documentation
 
 | Document | Purpose |
 |---|---|
-| [vpf-setup-steps.md](vpf-setup-steps.md) | Exact steps to enable and show voluntary PF |
-| [client-demo-guide.md](client-demo-guide.md) | Client demo script, numbers, FAQ |
+| [vpf-setup-steps.md](vpf-setup-steps.md) | Enable and verify voluntary PF |
+| [user-guide.md](user-guide.md) | Product behaviour and demo walkthrough |
 
-**App:** `hrms_pf_india`  
-**Repo:** https://github.com/souravs72/hrms_pf_india
+Keep these guides generic. Do not add site URLs, employee IDs, emails, or credentials.

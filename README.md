@@ -2,7 +2,7 @@
 
 Opt-in Voluntary Provident Fund (VPF) for Frappe HRMS.
 
-Mandatory PF stays in the Salary Structure. This app only adds a recurring **Additional Provident Fund** row when an employee opts in.
+Mandatory PF stays in the **Salary Structure**. This app adds a recurring **Additional Provident Fund** row only when an employee opts in.
 
 ## Install
 
@@ -14,47 +14,29 @@ bench --site your-site migrate
 
 ## Setup
 
-Salary Structure deduction (mandatory PF — HRMS):
+### 1. Mandatory PF (Salary Structure)
 
 | Component | Formula |
 |---|---|
 | Provident Fund | `B * 0.12 if B <= 15000 else 1800` |
 
-> Use this form — HRMS salary formulas do not support `min()`.
+Do not add voluntary PF to the structure. HRMS salary formulas do not support `min()`.
 
-On Employee:
+### 2. Voluntary PF (Employee)
 
 1. Check **Opt for Voluntary PF**
 2. Enter **Voluntary PF Amount**
 3. Set **Consent Date**
+4. Save
 
-Saving the employee creates/updates a recurring Additional Salary for **Additional Provident Fund**, which appears on the salary slip.
+The app creates or updates a recurring **Additional Salary** for **Additional Provident Fund**, which appears on the salary slip.
 
 ## Documentation
 
 | Doc | Purpose |
 |---|---|
-| [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md) | Steps to enable and show voluntary PF |
-| [`docs/client-demo-guide.md`](docs/client-demo-guide.md) | Client demo walkthrough |
-
-## Local demo setup
-
-```bash
-bench --site hrms-pf.localhost execute hrms_pf_india.hrms_pf_india.setup.demo_payroll.setup_demo_payroll
-```
-
-Creates:
-
-- Employees for `sourav@ascratech.com` (VPF ₹2,000) and `avishek@clapgrow.com` (no VPF)
-- Salary structure **Standard Monthly PF**
-- Sample salary slips
-- Print format **Salary Slip Clean**
-
-## Client demo guide
-
-Full walkthrough (script, numbers, FAQ): [`docs/client-demo-guide.md`](docs/client-demo-guide.md)
-
-Setup steps used for a successful VPF demo: [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md)
+| [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md) | Setup and verification steps |
+| [`docs/user-guide.md`](docs/user-guide.md) | How it works and how to demonstrate |
 
 ## License
 
