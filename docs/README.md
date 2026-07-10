@@ -4,5 +4,6 @@
 |---|---|
 | [vpf-setup-steps.md](vpf-setup-steps.md) | Enable and verify voluntary PF |
 | [user-guide.md](user-guide.md) | Product behaviour and demo walkthrough |
+| [production-demo-records.md](production-demo-records.md) | How production demo documents were created |
 
-Keep these guides generic. Do not add site URLs, employee IDs, emails, or credentials.
+Keep credentials and private contact details out of these files.

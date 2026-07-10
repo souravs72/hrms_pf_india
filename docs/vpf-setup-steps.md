@@ -117,3 +117,15 @@ Leave the checkbox unchecked for employees without VPF.
 - [ ] Provident Fund Account (UAN) filled on employees where needed
 - [ ] Opted-in employees have checkbox, amount, and consent date
 - [ ] Sample slips reviewed for one opted-in and one non-opted employee
+
+---
+
+## Production demo (live site)
+
+On the live site, three documents were prepared to show real behaviour:
+
+1. **Additional Salary** — recurring Additional Provident Fund after Employee opt-in  
+2. **Salary Slip** — employee with VPF (extra Additional Provident Fund row)  
+3. **Salary Slip** — employee without VPF (control)
+
+Slips were kept as **Draft**. Full method and what to open: [`production-demo-records.md`](production-demo-records.md).

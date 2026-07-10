@@ -37,6 +37,7 @@ The app creates or updates a recurring **Additional Salary** for **Additional Pr
 |---|---|
 | [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md) | Setup and verification steps |
 | [`docs/user-guide.md`](docs/user-guide.md) | How it works and how to demonstrate |
+| [`docs/production-demo-records.md`](docs/production-demo-records.md) | Production demo documents and how they were created |
 
 ## License
 
