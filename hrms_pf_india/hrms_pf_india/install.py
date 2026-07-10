@@ -3,7 +3,7 @@
 
 import frappe
 
-from hrms_pf_india.hrms_pf_india.setup.custom_fields import make_custom_fields
+from hrms_pf_india.hrms_pf_india.setup.custom_fields import rebuild_employee_fields
 from hrms_pf_india.hrms_pf_india.setup.salary_components import ensure_pf_salary_components
 
 
@@ -13,7 +13,7 @@ def after_install():
 
 def after_migrate():
 	_ensure_india_hrms_fields()
-	make_custom_fields()
+	rebuild_employee_fields()
 	ensure_pf_salary_components()
 	frappe.clear_cache()
 

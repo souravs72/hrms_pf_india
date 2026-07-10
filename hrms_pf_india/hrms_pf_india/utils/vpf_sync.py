@@ -5,38 +5,19 @@ import frappe
 from frappe import _
 from frappe.utils import add_years, flt, getdate, today
 
-from hrms_pf_india.hrms_pf_india.constants import (
-	MAX_VPF_PERCENT_OF_WAGES,
-	PF_CONTRIBUTION_STATUTORY,
-	PF_CONTRIBUTION_VOLUNTARY_FIXED,
-	STATUTORY_WAGE_CEILING,
-	VPF_ADDITIONAL_SALARY_YEARS,
-)
+from hrms_pf_india.hrms_pf_india.constants import VPF_ADDITIONAL_SALARY_YEARS
 from hrms_pf_india.hrms_pf_india.setup.salary_components import ADDITIONAL_PF_COMPONENT
-from hrms_pf_india.hrms_pf_india.utils.pf_calculator import (
-	MANDATORY_PF_CAP,
-	calculate_pf_breakup,
-	calculate_voluntary_pf,
-	get_pf_wages,
-)
 
 
 def validate_employee_pf_settings(doc, method=None):
-	pf_wages = get_pf_wages(doc.name) if doc.name else 0
-	breakup = calculate_pf_breakup(doc, pf_wages=pf_wages)
-	doc.estimated_mandatory_pf = breakup["mandatory_pf"]
-	doc.estimated_voluntary_pf = breakup["voluntary_pf"]
-	doc.estimated_total_employee_pf = breakup["total_employee_pf"]
-
-	contribution_type = doc.get("pf_contribution_type") or PF_CONTRIBUTION_STATUTORY
-	if contribution_type == PF_CONTRIBUTION_STATUTORY:
+	if not doc.get("opt_for_voluntary_pf"):
 		return
 
-	if not doc.get("pf_consent_date"):
-		frappe.throw(_("Consent Date is required for voluntary PF."))
-
-	if contribution_type == PF_CONTRIBUTION_VOLUNTARY_FIXED and flt(doc.get("voluntary_pf_amount")) <= 0:
+	if flt(doc.get("voluntary_pf_amount")) <= 0:
 		frappe.throw(_("Voluntary PF Amount must be greater than zero."))
+
+	if not doc.get("pf_consent_date"):
+		frappe.throw(_("Consent Date is required."))
 
 	if not doc.name:
 		return
@@ -46,12 +27,6 @@ def validate_employee_pf_settings(doc, method=None):
 
 	if not _has_salary_structure_assignment(doc.name, doc.get("pf_consent_date")):
 		frappe.throw(_("Salary Structure Assignment is required before enabling voluntary PF."))
-
-	if not breakup["pf_wages"]:
-		frappe.throw(_("Salary Structure Assignment base pay is required."))
-
-	if breakup["total_employee_pf"] > flt(breakup["pf_wages"] * MAX_VPF_PERCENT_OF_WAGES):
-		frappe.throw(_("Total employee PF cannot exceed 100% of PF wages."))
 
 
 def sync_vpf_additional_salary(doc, method=None):
@@ -71,21 +46,27 @@ def sync_vpf_additional_salary(doc, method=None):
 
 
 def _sync_vpf_additional_salary(doc):
-	voluntary_amount = calculate_voluntary_pf(doc, get_pf_wages(doc.name))
+	amount = _voluntary_amount(doc)
 	active = _get_active_vpf_additional_salary(doc.name)
 
-	if voluntary_amount <= 0:
+	if amount <= 0:
 		_disable_vpf_additional_salary(active)
 		return
 
-	if active and flt(active.amount) == flt(voluntary_amount):
+	if active and flt(active.amount) == flt(amount):
 		return
 
 	if active:
-		_replace_vpf_additional_salary(doc, voluntary_amount, active.name)
+		_replace_vpf_additional_salary(doc, amount, active.name)
 		return
 
-	_create_vpf_additional_salary(doc, voluntary_amount)
+	_create_vpf_additional_salary(doc, amount)
+
+
+def _voluntary_amount(doc):
+	if not doc.get("opt_for_voluntary_pf"):
+		return 0
+	return flt(doc.get("voluntary_pf_amount"))
 
 
 def _has_salary_structure_assignment(employee, from_date):
@@ -168,22 +149,4 @@ def _disable_vpf_additional_salary(existing):
 	if not existing:
 		return
 
-	frappe.db.set_value(
-		"Additional Salary",
-		existing.name,
-		"disabled",
-		1,
-		update_modified=True,
-	)
-
-
-@frappe.whitelist()
-def get_pf_preview(employee, pf_wages=None):
-	frappe.has_permission("Employee", "read", employee, throw=True)
-
-	employee_doc = frappe.get_doc("Employee", employee)
-	pf_wages = flt(pf_wages) if pf_wages else get_pf_wages(employee)
-	breakup = calculate_pf_breakup(employee_doc, pf_wages=pf_wages)
-	breakup["statutory_wage_ceiling"] = STATUTORY_WAGE_CEILING
-	breakup["mandatory_pf_cap"] = MANDATORY_PF_CAP
-	return breakup
+	frappe.db.set_value("Additional Salary", existing.name, "disabled", 1, update_modified=True)

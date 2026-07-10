@@ -1,6 +1,8 @@
 # HRMS PF India
 
-Per-employee EPF/VPF for Frappe HRMS.
+Opt-in Voluntary Provident Fund (VPF) for Frappe HRMS.
+
+Mandatory PF stays in the Salary Structure. This app only adds a recurring **Additional Provident Fund** row when an employee opts in.
 
 ## Install
 
@@ -12,21 +14,19 @@ bench --site your-site migrate
 
 ## Setup
 
-Salary Structure deduction:
+Salary Structure deduction (mandatory PF — HRMS):
 
 | Component | Formula |
 |---|---|
 | Provident Fund | `min(BS, 15000) * 0.12` |
 
-Voluntary PF is synced via Additional Salary — do not add it to the structure.
+On Employee:
 
-## Employee PF types
+1. Check **Opt for Voluntary PF**
+2. Enter **Voluntary PF Amount**
+3. Set **Consent Date**
 
-| Type | Result |
-|---|---|
-| Statutory Minimum | Provident Fund only |
-| Voluntary Fixed Amount | Provident Fund + fixed Additional PF |
-| Voluntary on Full Basic | Provident Fund + Additional PF (12% of basic − mandatory) |
+Saving the employee creates/updates a recurring Additional Salary for **Additional Provident Fund**, which appears on the salary slip.
 
 ## License
 

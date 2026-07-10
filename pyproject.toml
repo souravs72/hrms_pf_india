@@ -3,7 +3,7 @@ name = "hrms_pf_india"
 authors = [
     { name = "Ascra Technologies", email = "admin@ascratech.com" }
 ]
-description = "Per-employee EPF/VPF for HRMS"
+description = "Voluntary PF opt-in for HRMS"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]

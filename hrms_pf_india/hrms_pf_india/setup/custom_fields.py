@@ -3,10 +3,19 @@
 
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.utils import flt
 
 
 def make_custom_fields():
 	create_custom_fields(get_custom_fields(), update=True)
+
+
+def rebuild_employee_fields():
+	"""Drop and recreate app fields so labels/order stay clean across upgrades."""
+	legacy = _read_legacy_vpf_employees()
+	_delete_app_employee_fields()
+	create_custom_fields(get_custom_fields(), update=True)
+	_apply_legacy_vpf_employees(legacy)
 
 
 def get_custom_fields():
@@ -14,79 +23,96 @@ def get_custom_fields():
 		"Employee": [
 			{
 				"fieldname": "pf_contribution_section",
-				"label": "PF Contribution (India)",
+				"label": "Voluntary Provident Fund",
 				"fieldtype": "Section Break",
 				"insert_after": _employee_pf_anchor_field(),
 				"collapsible": 1,
 				"module": "HRMS PF India",
 			},
 			{
-				"fieldname": "pf_contribution_type",
-				"label": "PF Contribution Type",
-				"fieldtype": "Select",
+				"fieldname": "opt_for_voluntary_pf",
+				"label": "Opt for Voluntary PF",
+				"fieldtype": "Check",
 				"insert_after": "pf_contribution_section",
-				"options": "\nStatutory Minimum\nVoluntary Fixed Amount\nVoluntary on Full Basic",
-				"default": "Statutory Minimum",
+				"default": "0",
 				"module": "HRMS PF India",
 			},
 			{
 				"fieldname": "voluntary_pf_amount",
-				"label": "Voluntary PF Amount (Monthly)",
+				"label": "Voluntary PF Amount",
 				"fieldtype": "Currency",
-				"insert_after": "pf_contribution_type",
-				"depends_on": 'eval:doc.pf_contribution_type=="Voluntary Fixed Amount"',
-				"mandatory_depends_on": 'eval:doc.pf_contribution_type=="Voluntary Fixed Amount"',
+				"insert_after": "opt_for_voluntary_pf",
+				"depends_on": "eval:doc.opt_for_voluntary_pf",
+				"mandatory_depends_on": "eval:doc.opt_for_voluntary_pf",
 				"module": "HRMS PF India",
 			},
 			{
 				"fieldname": "pf_consent_date",
-				"label": "PF Voluntary Consent Date",
+				"label": "Consent Date",
 				"fieldtype": "Date",
 				"insert_after": "voluntary_pf_amount",
-				"depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
-				"mandatory_depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
-				"module": "HRMS PF India",
-			},
-			{
-				"fieldname": "employer_matches_vpf",
-				"label": "Employer Matches Voluntary PF",
-				"fieldtype": "Check",
-				"insert_after": "pf_consent_date",
-				"depends_on": 'eval:doc.pf_contribution_type!="Statutory Minimum" && doc.pf_contribution_type',
-				"module": "HRMS PF India",
-			},
-			{
-				"fieldname": "pf_preview_column",
-				"fieldtype": "Column Break",
-				"insert_after": "employer_matches_vpf",
-				"module": "HRMS PF India",
-			},
-			{
-				"fieldname": "estimated_mandatory_pf",
-				"label": "Estimated Mandatory PF",
-				"fieldtype": "Currency",
-				"insert_after": "pf_preview_column",
-				"read_only": 1,
-				"module": "HRMS PF India",
-			},
-			{
-				"fieldname": "estimated_voluntary_pf",
-				"label": "Estimated Voluntary PF",
-				"fieldtype": "Currency",
-				"insert_after": "estimated_mandatory_pf",
-				"read_only": 1,
-				"module": "HRMS PF India",
-			},
-			{
-				"fieldname": "estimated_total_employee_pf",
-				"label": "Estimated Total Employee PF",
-				"fieldtype": "Currency",
-				"insert_after": "estimated_voluntary_pf",
-				"read_only": 1,
+				"depends_on": "eval:doc.opt_for_voluntary_pf",
+				"mandatory_depends_on": "eval:doc.opt_for_voluntary_pf",
 				"module": "HRMS PF India",
 			},
 		],
 	}
+
+
+def _read_legacy_vpf_employees():
+	"""Capture VPF opt-in data before custom fields are rebuilt."""
+	columns = {row[0] for row in frappe.db.sql("SHOW COLUMNS FROM `tabEmployee`")}
+	rows = []
+
+	if "pf_contribution_type" in columns:
+		for employee, amount, consent in frappe.db.sql(
+			"""
+			SELECT name, IFNULL(voluntary_pf_amount, 0), pf_consent_date
+			FROM `tabEmployee`
+			WHERE IFNULL(pf_contribution_type, '') IN (
+				'Voluntary Fixed Amount',
+				'Voluntary on Full Basic'
+			)
+			"""
+		):
+			rows.append((employee, flt(amount), consent))
+		return rows
+
+	if "opt_for_voluntary_pf" in columns:
+		for employee, amount, consent in frappe.db.sql(
+			"""
+			SELECT name, IFNULL(voluntary_pf_amount, 0), pf_consent_date
+			FROM `tabEmployee`
+			WHERE IFNULL(opt_for_voluntary_pf, 0) = 1
+			"""
+		):
+			rows.append((employee, flt(amount), consent))
+
+	return rows
+
+
+def _apply_legacy_vpf_employees(rows):
+	for employee, amount, consent in rows:
+		frappe.db.set_value(
+			"Employee",
+			employee,
+			{
+				"opt_for_voluntary_pf": 1,
+				"voluntary_pf_amount": amount,
+				"pf_consent_date": consent,
+			},
+			update_modified=False,
+		)
+
+
+def _delete_app_employee_fields():
+	names = frappe.get_all(
+		"Custom Field",
+		filters={"dt": "Employee", "module": "HRMS PF India"},
+		pluck="name",
+	)
+	for name in names:
+		frappe.delete_doc("Custom Field", name, force=True, ignore_permissions=True)
 
 
 def _employee_pf_anchor_field():
