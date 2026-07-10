@@ -30,6 +30,13 @@ On Employee:
 
 Saving the employee creates/updates a recurring Additional Salary for **Additional Provident Fund**, which appears on the salary slip.
 
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md) | Steps to enable and show voluntary PF |
+| [`docs/client-demo-guide.md`](docs/client-demo-guide.md) | Client demo walkthrough |
+
 ## Local demo setup
 
 ```bash
@@ -46,6 +53,8 @@ Creates:
 ## Client demo guide
 
 Full walkthrough (script, numbers, FAQ): [`docs/client-demo-guide.md`](docs/client-demo-guide.md)
+
+Setup steps used for a successful VPF demo: [`docs/vpf-setup-steps.md`](docs/vpf-setup-steps.md)
 
 ## License
 
