@@ -18,7 +18,9 @@ Salary Structure deduction (mandatory PF — HRMS):
 
 | Component | Formula |
 |---|---|
-| Provident Fund | `min(BS, 15000) * 0.12` |
+| Provident Fund | `B * 0.12 if B <= 15000 else 1800` |
+
+> Use this form — HRMS salary formulas do not support `min()`.
 
 On Employee:
 
@@ -34,7 +36,16 @@ Saving the employee creates/updates a recurring Additional Salary for **Addition
 bench --site hrms-pf.localhost execute hrms_pf_india.hrms_pf_india.setup.demo_payroll.setup_demo_payroll
 ```
 
-Creates employees for the demo users, salary structure **Standard Monthly PF**, July salary slips, and print format **Salary Slip Clean**.
+Creates:
+
+- Employees for `sourav@ascratech.com` (VPF ₹2,000) and `avishek@clapgrow.com` (no VPF)
+- Salary structure **Standard Monthly PF**
+- Sample salary slips
+- Print format **Salary Slip Clean**
+
+## Client demo guide
+
+Full walkthrough (script, numbers, FAQ): [`docs/client-demo-guide.md`](docs/client-demo-guide.md)
 
 ## License
 
