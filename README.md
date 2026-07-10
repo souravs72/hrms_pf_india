@@ -28,6 +28,14 @@ On Employee:
 
 Saving the employee creates/updates a recurring Additional Salary for **Additional Provident Fund**, which appears on the salary slip.
 
+## Local demo setup
+
+```bash
+bench --site hrms-pf.localhost execute hrms_pf_india.hrms_pf_india.setup.demo_payroll.setup_demo_payroll
+```
+
+Creates employees for the demo users, salary structure **Standard Monthly PF**, July salary slips, and print format **Salary Slip Clean**.
+
 ## License
 
 MIT
